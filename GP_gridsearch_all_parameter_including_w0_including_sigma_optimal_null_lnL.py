@@ -11,44 +11,13 @@ from astropy.table import Table
 from scipy.optimize import minimize_scalar
 # Load data
 name= 'activity RV asymmetric two spot configuration'
-#df = pd.read_csv('J22565+165.avc_TAC.dat', sep=r'\s+')
-#df = df[(df['BJD'] >= 2459000) & (df['BJD'] <= 2460000)]
 # Extract the time and radial velocity
 
-df = pd.read_csv('timeseries_forward_resultsstarsim irregular timestamps TWO 100 spots lifetime 200 Prot 40 MC simulations harmonic allowed gridsearch rms 2 assymetric369188151224270.csv')
-df = df.sort_values(by='time', ascending=True)
+df = pd.read_csv('timeseries activity RV asymmetric TWO spot region configuration.csv')
 
-t = df['time']
-y = df['RV']
-#yerr = df['yerr'] 
-#nmbr= 288
-np.random.seed(42)
-#t = np.random.uniform(0,1000, nmbr)#df.iloc[:, 0]
-#y =  1*np.sin(2*np.pi*t/40)#df.iloc[:, 1]
-yerr = np.random.normal(loc=1, scale=0.01, size=t.shape)#df.iloc[:,2]
-jitter = 1.0
-noise = np.random.normal(loc=0, scale=np.sqrt(yerr**2+jitter**2), size=t.shape)
-rms_scatter = np.sqrt(np.mean((y - np.mean(y))**2))
-print('original rms_scatter = ',rms_scatter)
-    
-y=2*y/rms_scatter
-y = y + noise
-df = pd.DataFrame({
-    't': t,
-    'y': y,
-    'yerr': yerr
-})
-
-# Sort the DataFrame based on the 't' column in ascending order
-df_sorted = df.sort_values(by='t', ascending=True)
-
-# Assign the sorted data back to the variables t, y, and yerr
-# This extracts the sorted columns back into NumPy arrays
-t = df_sorted['t'].values
-y = df_sorted['y'].values
-yerr = df_sorted['yerr'].values 
-df_sorted.to_csv(name+'gridsearch results.csv', index=False)
-
+t = df['t']
+y = df['y']
+yerr = df['yerr']
 
 plt.figure(figsize=(10, 6))
 plt.errorbar(t-min(t), y, yerr=yerr, fmt=".k", capsize=0)
@@ -60,25 +29,6 @@ plt.grid(True)
 plt.savefig(name+' timeseries initial gridsearch.png')
 plt.show()
 plt.close()
-# Extract the time and radial velocity
-#data = pd.read_csv('J20567-104_SERVAL+RACOON.csv')
-#cols_to_check = [data.columns[3], data.columns[4]]
-
-# 2. Drop rows where NaNs appear in *either* of those columns
-#data_cleaned = data.dropna(subset=cols_to_check)
-
-# --- Now Extract Your Data ---
-
-# 3. Extract columns from the *cleaned* DataFrame
-#t = data_cleaned.iloc[:, 0]
-#y = data_cleaned.iloc[:, 3]
-#yerr = data_cleaned.iloc[:, 4]
-
-#mask = yerr <= 2.0
-# Apply the mask to filter t, y, yerr
-#t = t[mask].reset_index(drop=True)
-#y = y[mask].reset_index(drop=True)
-#yerr = yerr[mask].reset_index(drop=True)
 
 
 # Compute weights
