@@ -26,7 +26,7 @@ plt.ylabel("RV [m/s]")
 #plt.title(name)
 plt.grid(True)
 #plt.legend()
-plt.savefig(name+' timeseries initial gridsearch.png')
+plt.savefig(name+' timeseries.png')
 plt.show()
 plt.close()
 
