@@ -399,24 +399,9 @@ def process_w0(w0, y, t, yerr, timespan_obs, weighted_mean_value, null_log_like,
     log_Q2 = df.loc[closest_w0_idx, 'log_Q2']
     log_sigma = df.loc[closest_w0_idx, 'log_sigma']
     w0=w0copy
-    # Get the row with the maximum delta_ll
-    #max_row = filtered_df.loc[filtered_df['delta_ll'].idxmax()]
     
-    #log_S0_1 = max_row['log_S0_1']
-    #log_Q1 = max_row['log_Q1']
-    #log_S0_2 = max_row['log_S0_2']
-    #log_Q2 = max_row['log_Q2']
-    #log_sigma = max_row['log_sigma']
-    #Q=0.905667128481871
-    #initial_log_Q = np.log(Q)
     log_Q_lowest = np.log(0.501)
-    #log_w0min= np.log(w0min)
-    #log_w0max = np.log(w0max) 
-    #initial_log_S0 = -6#np.log(np.var(y)/ (w0 * Q))
-    #S0 = np.var(y) / (w0 * Q)
-    #S2= np.var(y) / (w0 * Q)
-    log_max_Q= np.log(timespan_obs*w0/2)
-    #bounds = [(-15,15),(np.log(0.5), np.log(1000)), (-15, 15),(-15,15),(np.log(0.5), np.log(1000)), (-15, 15)]  # Adjusting the order based on params
+
     # Define parameter bounds
     bounds = {"log_S0": (-15, 15), "log_Q": (log_Q_lowest, 15), "log_omega0": (-15, 15)}
     # Define two-term kernel: one for w0, one for w1 = 2*w0
@@ -467,44 +452,6 @@ def process_w0(w0, y, t, yerr, timespan_obs, weighted_mean_value, null_log_like,
     #print(f"Optimized Offset: {offset}")
     #you should not keep w_2 free to optimize beyound 5% of 2*w0 (0.5 time the period). Because then it prioretizes optimiing double the period of rotation of star.
      
-    
-    # Calculate the null frequency based on the observation window
-    w_null = (2* np.pi) / (2*timespan_obs)
-    closest_w0_idx = (df['w0'] - w_null).abs().idxmin()
-    filtered_df = df[df['w0'] == w_null]
-    print('w0 target = ',w_null)
-    w_null = df.loc[closest_w0_idx, 'w0']
-    null_log_sigma = df.loc[closest_w0_idx, 'log_sigma']
-    null_log_S0_1 = -15 #-5
-    null_log_Q_1 = np.log(0.502) 
-    term1 = terms.SHOTerm(log_S0=null_log_S0_1, log_Q=null_log_Q_1,  log_omega0=np.log(w_null), bounds=bounds)
-    term2 = terms.SHOTerm(log_S0=null_log_S0_1, log_Q=null_log_Q_1, log_omega0=np.log(2 * w_null), bounds=bounds2)
-
-    term1.freeze_parameter("log_omega0")
-    term2.freeze_parameter("log_omega0")
-    term1.freeze_parameter("log_S0")
-    term2.freeze_parameter("log_S0")
-    jitter_term = terms.JitterTerm( log_sigma=null_log_sigma, bounds={"log_sigma": (-15, 15)} )  # Adjust
-
-    null_kernel = term1 + term2+ jitter_term
-    null_gp = celerite.GP(null_kernel, mean=weighted_mean_value)
-    null_gp.compute(t, yerr)
-    null_initial_params = null_gp.get_parameter_vector()
-
-    # Re-optimize the Null GP (starting from the signal's optimized S0 and Q)
-    res_null = minimize(neg_log_like, null_gp.get_parameter_vector(), method="L-BFGS-B", bounds=null_gp.get_parameter_bounds(), args=(y, null_gp))
-    null_gp.set_parameter_vector(res_null.x)
-    null_gp_optimized_params = null_gp.get_parameter_dict()
-
-    print('null gp optimized_params dictionary= ', null_gp_optimized_params)
-    null_S0_1 = np.exp(null_log_S0_1)#np.exp(null_gp_optimized_params['kernel:terms[0]:log_S0'])#np.exp(null_log_S0_1)#
-    null_Q_1 = np.exp(null_gp_optimized_params['kernel:terms[0]:log_Q'])
-    null_S0_2 = np.exp(null_log_S0_1)#np.exp(null_gp_optimized_params['kernel:terms[1]:log_S0'])#np.exp(null_log_S0_1)#
-    null_Q_2 = np.exp(null_gp_optimized_params['kernel:terms[1]:log_Q'])
-    #w_2 = 2*w0#
-    null_jitter=np.exp(null_gp_optimized_params['kernel:terms[2]:log_sigma'])
-
-    null_log_like = null_gp.log_likelihood(y)
     delta_log_like = gp.log_likelihood(y) - null_log_like
     
     # Return results as a single list
