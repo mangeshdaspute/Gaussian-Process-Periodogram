@@ -9,6 +9,10 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 from astropy.table import Table
 from scipy.optimize import minimize_scalar
+
+
+#####################calculate RMS of data. set upper bound for jitter as RMS and S0 using formula for S0 and lowest frequency. 
+
 # Load data
 name= 'activity RV asymmetric two spot configuration'
 # Extract the time and radial velocity
