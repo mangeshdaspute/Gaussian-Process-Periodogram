@@ -1221,4 +1221,4 @@ residual_df = pd.DataFrame({
 })
 
 # Save to CSV
-residual_df.to_csv(name+" residuals after dSHO gp prediction with jitter.csv", index=False)
+residual_df.to_csv(name+" residuals after double SHO gp prediction with jitter.csv", index=False)
