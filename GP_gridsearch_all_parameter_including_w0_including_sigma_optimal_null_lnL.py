@@ -11,7 +11,7 @@ from astropy.table import Table
 from scipy.optimize import minimize_scalar
 
 
-#####################calculate RMS of data. set upper bound for jitter as RMS and S0 using formula for S0 and lowest frequency. 
+#####################calculate RMS of data. set upper bound for jitter as RMS and S0 using formula for S0 and lowest frequency. also reduce the n_points accordingly. It will increase computatiaonl efficiency. 
 
 # Load data
 name= 'activity RV asymmetric two spot configuration'
