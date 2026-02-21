@@ -25,79 +25,14 @@ import random
 from astropy.table import Table
 from matplotlib import gridspec
 
-name= 'activity RV asymmetric two spot configuration undersampled'
+name= 'activity RV asymmetric two spot region configuration'
 
-optimal_parameters_filename='optimal_parameters activity RV asymmetric two spot configuration'
+optimal_parameters_filename='optimal_parameters timeseries activity RV asymmetric TWO spot region configuration'
 
-#nmbr= 288
-#np.random.seed(42)
-#t = np.random.uniform(0,1000, nmbr)#df.iloc[:, 0]
-#y = 0.5*np.sin(2*np.pi*t/40)#df.iloc[:, 1]
-#yerr = np.random.normal(loc=1, scale=0.1, size=t.shape)#df.iloc[:,2]
-#noise = np.random.normal(loc=0, scale=yerr+0.5, size=t.shape)
-#y = y+noise 
-#df = pd.DataFrame({
-#    't': t,
-#    'y': y,
-#    'yerr': yerr
-#})
-
-## Sort the DataFrame based on the 't' column in ascending order
-#df_sorted = df.sort_values(by='t', ascending=True)
-
-## Assign the sorted data back to the variables t, y, and yerr
-## This extracts the sorted columns back into NumPy arrays
-#t = df_sorted['t']
-#y = df_sorted['y']
-#yerr = df_sorted['yerr'] 
-
-df = pd.read_csv('activity RV asymmetric two spot configurationgridsearch results.csv')
+df = pd.read_csv('timeseries activity RV asymmetric TWO spot region configuration.csv')
 t = df['t']
 y = df['y']
 yerr = df['yerr'] 
-
-
-
-
-plt.figure()
-plt.plot(t,y,'r.')
-plt.show()
-
-#data = pd.read_csv('J20567-104_SERVAL+RACOON.csv')
-# Extract the time and radial velocity
-#cols_to_check = [data.columns[3], data.columns[4]]
-# 2. Drop rows where NaNs appear in *either* of those columns
-#data_cleaned = data.dropna(subset=cols_to_check)
-# --- Now Extract Your Data ---
-# 3. Extract columns from the *cleaned* DataFrame
-#t = data_cleaned.iloc[:, 0]
-#y = data_cleaned.iloc[:, 3]
-#yerr = data_cleaned.iloc[:, 4]
-#AIRMASS = data_cleaned['AIRMASS']
-
-#mask = yerr <= 4.0
-# Apply the mask to filter t, y, yerr
-#t = t[mask].reset_index(drop=True)
-#y = y[mask].reset_index(drop=True)
-#yerr = yerr[mask].reset_index(drop=True)
-
-#mask = yerr <= 2.0
-# Apply the mask to filter t, y, yerr
-#t = t[mask].reset_index(drop=True)
-#y = y[mask].reset_index(drop=True)
-#yerr = yerr[mask].reset_index(drop=True)
-#semi_amplitude=(  max(y)-min(y) )/2
-#y=8*y/semi_amplitude
-
-
-#plt.figure(figsize= (8,6), dpi=300)
-#plt.plot(AIRMASS,y,'r.')
-#plt.ylabel('RV [m/s]')
-#plt.xlabel('AIRMASS')
-#plt.title(name +' RV AIRMASS relation ')
-#plt.grid(True)
-#plt.show()
-#plt.savefig(name+'RV AIRMASS relation.png')
 
 dt = t.diff().dropna() 
 
@@ -112,41 +47,16 @@ plt.grid(True)
 plt.show()
 plt.savefig(name+' dt.png')
 print('median dt = ', median_dt)
-
-#y=y-np.mean(y)
 print('median uncertainity = ', np.median(yerr))
+
+
 plt.figure(figsize=(10,6), dpi=300)
-
 plt.plot(yerr, 'r.')
-
 plt.xlabel('index of observation')
 plt.ylabel('RV uncertainity [m/s]')
 #plt.title(name)
 plt.grid(True)
 plt.savefig(name+' uncertainity.png')
-#t_HARPS = data_HARPS['x0003']
-#y_HARPS =data_HARPS['y0003']# 15*np.sin(2*np.pi/40*  (t-min(t))   )
-#yerr_HARPS = data_HARPS['y_min_error_0004']
-#y_HARPS=y_HARPS-np.mean(y_HARPS)
-
-#t = pd.concat([t_HARPS,t], ignore_index=True)
-#y = pd.concat([y_HARPS,y], ignore_index=True)
-#yerr = pd.concat([yerr_HARPS,yerr], ignore_index=True)
-#y_simulated=np.random.normal(0, yerr, len(t))
-#np.random.seed(42)  # For reproducibility, optional
-#noise = np.random.normal(loc=0, scale=yerr, size=t.shape)
-#y= y_simulated+noise
-#t = data['BJD']
-#y = data['AVC']
-#yerr = data['E_AVC']
-
-
-
-#perfectly periodic data. 
-#y=5*np.sin(2*np.pi*t/40 )+np.random.uniform(-1.00, 1.0, len(t))
-##################remove 4 sigma outliers#######################
-#totally quasiperiodic data synthetic
-#restrict amplitude
 
 # Compute residuals (use mean RV as the model baseline)
 model = np.mean(y)	
@@ -156,13 +66,6 @@ print("rms_scatter before clipping = ",rms_scatter)
 # Standardize residuals
 standardized_residuals = residuals / yerr
 
-# Mask to filter out 4-sigma outliers
-mask = np.abs(standardized_residuals) < 3
-
-# Filter time and RV data
-#t = t[mask]
-#y = y[mask]
-#yerr = yerr[mask]
 
 print('length of t = ',len(t))
 plt.figure(figsize=(10, 6), dpi=300)
@@ -175,13 +78,6 @@ plt.legend()
 plt.savefig(name+' timeseries.png')
 plt.show(block=False)
 plt.close()
-
-
-
-
-#plt.xlim(0, 50)
-#plt.ylim(-2.5, 2.5);
-
 
 
 
@@ -228,17 +124,6 @@ def null_log_likelihood_with_jitter(ln_sigma_j_sq, y, yerr):
     
     # The optimization function in scipy minimizes, so we return the negative log-likelihood
     return -log_likelihood
-
-# --- Example Usage (Assuming y and yerr are defined) ---
-# Example data (replace with your actual data)
-# y = np.array([10.1, 10.5, 9.8, 11.0])
-# yerr = np.array([0.5, 0.4, 0.3, 0.6])
-
-# Find the jitter variance (sigma_j^2) that maximizes the log-likelihood.
-# We optimize over ln(sigma_j^2) to ensure sigma_j^2 >= 0 and use a 
-# reasonable search range for ln(sigma_j^2).
-# A good starting range is from log(1e-10) up to log(max(yerr**2) * 10).
-# The minimum jitter is sigma_j^2 = 0, which corresponds to ln(sigma_j^2) -> -inf.
 
 # Set a very small minimum for the log-jitter-variance to approximate ln(0)
 min_ln_sq = np.log(1e-10)
