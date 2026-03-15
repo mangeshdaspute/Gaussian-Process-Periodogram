@@ -48,3 +48,79 @@ where `ω` is angular frequency, `S` is the power spectral density amplitude, `Q
 ## Application Example: Stellar Radial Velocity
 
 The primary application demonstrated in the accompanying paper is identifying the **rotational period of stars** and **Keplerian exoplanetary signals** in stellar radial velocity (RV) time series. Rotationally modulated star spots produce quasi-periodic RV variations that can mimic planetary signals, leading to false positives or obscuring true exoplanet detections.
+
+---
+
+## Functions
+
+#### `process_w0(w0, y, t, yerr, timespan_obs, weighted_mean_value, null_log_like, df)`
+
+Core function of the GP periodogram. Builds and optimises the double SHO GP model at a single trial angular frequency `w0`, using initial parameters loaded from the grid search CSV file. Runs `neg_log_like` minimisation via L-BFGS-B. Computes and returns ΔlnL, optimised kernel parameters, RV amplitudes, lifetimes, quality factors, jitter, and RMS fractions for both oscillators.
+
+| Argument | Type | Description |
+|---|---|---|
+| `w0` | `float` | Trial angular frequency [rad/day]. |
+| `y` | `np.ndarray` | Observed data values. |
+| `t` | `np.ndarray` | Observation timestamps. |
+| `yerr` | `np.ndarray` | Per-observation measurement uncertainties. |
+| `timespan_obs` | `float` | Total observation timespan in days. |
+| `weighted_mean_value` | `float` | Weighted mean of the data used as GP mean. |
+| `null_log_like` | `float` | Null model log-likelihood for ΔlnL computation. |
+| `df` | `pd.DataFrame` | Grid search results DataFrame; supplies initial kernel parameters. |
+
+**Returns:** `dict` or `pd.Series` containing ΔlnL, `log_S0_1`, `log_Q1`, lifetime₁, amplitude₁, `log_S0_2`, `log_Q2`, lifetime₂, amplitude₂, jitter, RMS fraction₁, RMS fraction₂.
+
+---
+
+#### `compute_for_w0(w0, t, y, yerr, weighted_mean_value, null_log_likelihood_value, log_S0_grid, log_Q_grid, log_sigma_grid)`
+
+Performs the full nested grid search over kernel parameters at a single trial angular frequency `w0`. Constructs a double SHO kernel with `term1` at `w0` and `term2` at `2×w0` (both with frozen `log_omega0`), plus a `JitterTerm`. Evaluates ΔlnL at every combination of grid points and returns a single-row DataFrame with the parameter combination that maximises ΔlnL.
+
+| Argument | Type | Description |
+|---|---|---|
+| `w0` | `float` | Trial angular frequency [rad/day] of the first oscillator. |
+| `t` | `np.ndarray` | Observation timestamps. |
+| `y` | `np.ndarray` | Observed data values. |
+| `yerr` | `np.ndarray` | Per-observation measurement uncertainties. |
+| `weighted_mean_value` | `float` | Weighted mean of `y` used as the GP mean. |
+| `null_log_likelihood_value` | `float` | Null model log-likelihood for computing ΔlnL. |
+| `log_S0_grid` | `np.ndarray` | Grid of `log_S0` values to search (applied to both oscillators). |
+| `log_Q_grid` | `np.ndarray` | Grid of `log_Q` values to search (applied to both oscillators). |
+| `log_sigma_grid` | `np.ndarray` | Grid of `log_sigma` (jitter) values to search. |
+
+**Returns:** `pd.DataFrame` — single row with columns `w0`, `log_S0_1`, `log_Q1`, `log_S0_2`, `log_Q2`, `log_sigma`, `delta_ll`.
+
+---
+
+## Interpreting the Output
+
+### GP Periodogram Plot
+
+- **X-axis**: Frequency of the first oscillator [1/d].
+- **Y-axis**: ΔlnL — log-likelihood of the GP model relative to the null model.
+- **Color**: RMS fraction of the first oscillator relative to the total data RMS.
+  - **Red**: First oscillator captures most of the variance → Keplerian/periodic signal at the trial frequency.
+  - **Blue/Purple**: Second oscillator captures most of the variance → the real signal is at twice the trial frequency; this peak is an alias/duplicate.
+
+### Lifetime Plot
+
+- **X-axis**: Frequency of each oscillator [1/d].
+- **Y-axis**: Signal lifetime [days] = `QP/π`.
+- **Red circles**: Lifetime of the first oscillator.
+- **Blue squares**: Lifetime of the second oscillator.
+- **Marker opacity**: Proportional to RMS fraction. Opaque markers indicate an oscillator that captures significant variance.
+- **Black dashed line**: Observation timespan. Lifetimes exceeding this by a factor of 2 indicate a stable, coherent signal (consistent with a Keplerian orbit). Lifetimes comparable to a few oscillator periods indicate a quasi-periodic signal (consistent with stellar activity).
+
+### Signal Classification Heuristics
+
+| Property | Keplerian / Periodic | Stellar Activity / Quasi-periodic |
+|---|---|---|
+| Peak colour | Red (at true period) | Green / Blue-green |
+| First oscillator lifetime | >> timespan | A few multiples of period |
+| Quality factor | >> 0.5 (typically > 1000) | Typically 5 – 500 |
+| Sub-harmonic peak | Purple (alias, short lifetime) | Opaque peak (real harmonic) |
+| RMS fraction of second oscillator at true period | ≈ 0 | Significant |
+
+
+
+
