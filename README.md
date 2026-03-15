@@ -8,6 +8,18 @@ Developed by M. Daspute, L. Tal-Or, M. Perger, P. Chaturvedi, I. Ribas, and Sree
 
 ---
 
+
+## Installation and Requirements
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/mangeshdaspute/Gaussian-Process-Periodogram.git
+cd Gaussian-Process-Periodogram
+pip install -r requirements.txt
+```
+---
+
 ## Overview
 
 Standard periodogram tools such as the Generalized Lomb-Scargle (GLS) periodogram fit a strictly sinusoidal model to the data. They are well-suited for detecting stable, coherent periodic signals (e.g., Keplerian orbits), but perform poorly on signals that evolve in phase and amplitude over time, such as rotationally modulated stellar activity.
