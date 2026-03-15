@@ -3,6 +3,7 @@
 #
 # Note: 'mlp' is a local module included in this repository.
 #       It is NOT available on PyPI and must not be listed here.
+# It is a copy of gls.py from https://github.com/mzechmeister/GLS/tree/master
 # Note: 'celerite' (v0.x) is required, NOT 'celerite2'.
 
 numpy>=1.21
