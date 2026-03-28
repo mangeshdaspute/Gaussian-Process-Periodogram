@@ -18,6 +18,11 @@ git clone https://github.com/mangeshdaspute/Gaussian-Process-Periodogram.git
 cd Gaussian-Process-Periodogram
 pip install -r requirements.txt
 ```
+Run code with:
+```bash
+python3 GP_main_refactored.py
+```
+
 ---
 
 ## Overview
