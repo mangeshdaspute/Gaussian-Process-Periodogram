@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ```
 Run code with:
 ```bash
-python3 GP_main_refactored.py
+python3 GP_Periodogram_main.py
 ```
 
 ---
