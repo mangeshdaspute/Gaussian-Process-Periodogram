@@ -30,7 +30,7 @@ import pandas as pd
 from astropy.timeseries import LombScargle
 
 import mlp  # local GLS implementation — required as-is
-from gp_periodogram_refactored import (
+from GP_Periodogram_functions import (
     # Null model
     compute_null_model,
     # Bootstrap
