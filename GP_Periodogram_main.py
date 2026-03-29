@@ -37,19 +37,19 @@ import mlp  # local GLS implementation — required as-is
 # CONFIG — edit this block to point at your data and tune the run
 # =============================================================================
 
-NAME = "activity RV asymmetric two spot region configuration single sho good guess"
+NAME = "activity RV asymmetric two spot region configuration double sho"
+#NAME = "timeseries single SHO kernel"
 
-# Kernel model: "double_sho" uses two SHO terms; "single_sho" uses one.
-KERNEL = "single_sho"  # "single_sho" | "double_sho"
+#Kernel model: "double_sho" uses two SHO terms; "single_sho" uses one.
+KERNEL = "double_sho"  # "single_sho" | "double_sho"
 
 # Path to input time series CSV (must contain columns 't', 'y', 'yerr')
-TIMESERIES_CSV = "timeseries activity RV asymmetric TWO spot region configuration.csv"
+TIMESERIES_CSV = "timeseries activity RV asymmetric TWO spot region configuration.csv" # "timeseries single SHO kernel.csv"
 
-# Path to pre-computed gridsearch CSV.  Set RUN_GRIDSEARCH = True to
-# recompute it; False to load from file.
+#path to store girdsearch results. 
 GRIDSEARCH_CSV = f"optimal_parameters {NAME}.csv"
 
-RUN_GRIDSEARCH = False  # set False after the first run to save time
+RUN_GRIDSEARCH = True  # Run gridsearch on intial parameters if True. It is slow and reliable. False flag uses same initial parameters for all frequencies for faster execution. 
 
 # Number of bootstrap iterations for the GLS FAP estimation
 N_BOOT_GLS = 100
