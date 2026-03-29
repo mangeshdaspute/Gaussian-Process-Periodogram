@@ -4,12 +4,12 @@
 
 An open-source Gaussian Process (GP) periodogram for identifying and differentiating **periodic** and **quasi-periodic** signals in unevenly sampled, noisy, and scarce time series data.
 
-Developed by M. Daspute, L. Tal-Or, M. Perger, P. Chaturvedi, I. Ribas, and Sreenivasan K. (Daspute et al. 2026, *Astronomy & Astrophysics*, submitted).
+Developed by M. Daspute, L. Tal-Or, M. Perger, P. Chaturvedi, I. Ribas, and Sreenivasan K. (Daspute et al. 2026, Astronomy & Astrophysics to be submitted).
 
 ---
 
 
-## Installation and Requirements
+## Installation and Usage
 
 Clone the repository and install dependencies:
 
@@ -18,6 +18,9 @@ git clone https://github.com/mangeshdaspute/Gaussian-Process-Periodogram.git
 cd Gaussian-Process-Periodogram
 pip install -r requirements.txt
 ```
+The default configuration is designed for detecting rotational and Keplerian signals in radial velocity timeseries.
+Open GP_Periodogram_main.py and edit the configuration code block, which contains - Name of the simulation, Kernel, CSV timeseries filename, Oversampling factor, etc.  
+
 Run code with:
 ```bash
 python3 GP_Periodogram_main.py
