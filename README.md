@@ -130,13 +130,14 @@ Performs the full nested grid search over kernel parameters at a single trial an
 
 ### Signal Classification Heuristics
 
-| Property | Keplerian / Periodic | Stellar Activity / Quasi-periodic |
-|---|---|---|
-| Peak colour | Red (at true period) | Green / Blue-green |
-| First oscillator lifetime | >> timespan | A few multiples of period |
-| Quality factor | >> 0.5 (typically > 1000) | Typically 5 – 500 |
-| Sub-harmonic peak | Purple (alias, short lifetime) | Opaque peak (real harmonic) |
-| RMS fraction of second oscillator at true period | ≈ 0 | Significant |
+| Property | Circular Planet / Periodic | Stellar Activity / Quasi-periodic | Eccentric Planet |
+|---|---|---|---|
+| First oscillator lifetime | > 10 * timespan | period of oscillator to 10 * timespan | > 10 * timespan |
+| Second oscillator lifetime | < period of oscillator | period of oscillator to 10 * timespan | > 10 * timespan |
+| RMS fraction of second oscillator | ≈ 0 | Significant |  Significant |
+| Which Oscillator has higher RMS fraction | First | Second |  First |
+
+
 
 
 
