@@ -180,8 +180,7 @@ def _process_single_w0(w0: float,
     Returns
     -------
     list
-        [S0_1, Q_1, delta_log_like, w0, jitter,
-         null_S0_1, null_Q_1, null_jitter, null_log_like_val]
+        [S0_1, Q_1, delta_log_like, w0, jitter,]
     """
     log_Q_lowest = np.log(0.501)
     bounds_sho = {
@@ -228,38 +227,10 @@ def _process_single_w0(w0: float,
 
     delta_log_like = gp.log_likelihood(y) - null_log_likelihood
 
-    # -- Null GP fit at the same frequency (diagnostic) --------------------
-    term1_null = terms.SHOTerm(
-        log_S0=log_S0_1, log_Q=log_Q1, log_omega0=np.log(w0),
-        bounds=bounds_sho,
-    )
-    term1_null.freeze_parameter("log_omega0")
-    jitter_null = terms.JitterTerm(
-        log_sigma=log_sigma,
-        bounds={"log_sigma": (-15, 15)},
-    )
-    kernel_null = term1_null + jitter_null
-    gp_null = celerite.GP(kernel_null, mean=weighted_mean)
-    gp_null.compute(t, yerr)
-
-    r_null = minimize(
-        _neg_log_like,
-        gp_null.get_parameter_vector(),
-        method="L-BFGS-B",
-        bounds=gp_null.get_parameter_bounds(),
-        args=(y, gp_null),
-    )
-    gp_null.set_parameter_vector(r_null.x)
-    params_null = gp_null.get_parameter_dict()
-
-    null_S0_1 = np.exp(params_null["kernel:terms[0]:log_S0"])
-    null_Q_1 = np.exp(params_null["kernel:terms[0]:log_Q"])
-    null_jitter = np.exp(params_null["kernel:terms[1]:log_sigma"])
-    null_log_like_val = gp_null.log_likelihood(y)
+    
 
     return [
         S0_1, Q_1, delta_log_like, w0, jitter,
-        null_S0_1, null_Q_1, null_jitter, null_log_like_val,
     ]
 
 
@@ -317,7 +288,6 @@ def build_results_dataframe(result: list, rms_scatter: float) -> pd.DataFrame:
     """
     cols = [
         "S0_1", "Q_1", "delta_log_like", "w0", "jitter",
-        "null_S0_1", "null_Q_1", "null_jitter", "null_log_like",
     ]
     df = pd.DataFrame(result, columns=cols)
 
@@ -397,9 +367,17 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
                         df_results: pd.DataFrame,
                         name: str,
                         xlim_full: tuple = (0.0, 1.0),
-                        xlim_zoom: tuple = (0.0, 0.1)) -> None:
+                        xlim_zoom: tuple = (0.0, 0.1),
+                        fap_1pct: float | None = None,
+                        fap_10pct: float | None = None) -> None:
     """Plot the single-SHO GP periodogram coloured by the RMS fraction of the
-    oscillator, at full range and zoomed in."""
+    oscillator, at full range and zoomed in.
+
+    Parameters
+    ----------
+    fap_1pct, fap_10pct : float or None
+        If provided, draw horizontal FAP threshold lines on the plot.
+    """
     for xlim, suffix in [(xlim_full, ""), (xlim_zoom, "_zoomed")]:
         fig, ax = plt.subplots(figsize=(10, 6), dpi=200)
         ax.plot(Frequency_val, delta_log_like, color="gray",
@@ -409,9 +387,18 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
             c=df_results["fraction_RMS1[m/s]"],
             cmap="rainbow", s=10, edgecolor="none", zorder=2,
         )
-        cbar = fig.colorbar(sc, cax=plt.gca().inset_axes([0.55, 0.93, 0.4, 0.035]), orientation="horizontal")
-        cbar.set_label('RMS fraction of oscillator', fontsize=10)
+        cbar = fig.colorbar(sc, cax=plt.gca().inset_axes([0.30, 0.96, 0.4, 0.035]),
+                    orientation="horizontal")#[left, bottom, width, height]
+        cbar.set_label("RMS fraction of oscillator", fontsize=10)
         cbar.ax.tick_params(labelsize=10)
+        if fap_1pct is not None:
+            ax.axhline(fap_1pct, color="black", linestyle="--",
+                       label=f"1% FAP ({fap_1pct:.2f})", zorder=3)
+        if fap_10pct is not None:
+            ax.axhline(fap_10pct, color="black", linestyle="-.",
+                       label=f"10% FAP ({fap_10pct:.2f})", zorder=3)
+        if fap_1pct is not None or fap_10pct is not None:
+            ax.legend(loc="upper right")
         ax.set_xlabel("Frequency of oscillator [1/d]")
         ax.set_ylabel("Δ lnL")
         ax.set_xlim(xlim)

@@ -37,25 +37,27 @@ import mlp  # local GLS implementation — required as-is
 # CONFIG — edit this block to point at your data and tune the run
 # =============================================================================
 
-NAME = "activity RV asymmetric two spot region configuration double sho"
-#NAME = "timeseries single SHO kernel"
-
 #Kernel model: "double_sho" uses two SHO terms; "single_sho" uses one.
-KERNEL = "double_sho"  # "single_sho" | "double_sho"
+KERNEL = "single_sho"  # "single_sho" | "double_sho"
+
+NAME = "activity RV asymmetric two spot region configuration double sho"+KERNEL
+#NAME = "timeseries single SHO kernel"+KERNEL
+
 
 # Path to input time series CSV (must contain columns 't', 'y', 'yerr')
-TIMESERIES_CSV = "timeseries activity RV asymmetric TWO spot region configuration.csv" # "timeseries single SHO kernel.csv"
+TIMESERIES_CSV = "timeseries single SHO kernel.csv" #"timeseries activity RV asymmetric TWO spot region configuration.csv" # 
 
 #path to store girdsearch results. 
 GRIDSEARCH_CSV = f"optimal_parameters {NAME}.csv"
 
 RUN_GRIDSEARCH = True  # Run gridsearch on intial parameters if True. It is slow and reliable. False flag uses same initial parameters for all frequencies for faster execution. 
 
-# Number of bootstrap iterations for the GLS FAP estimation
-N_BOOT_GLS = 100
+# GLS and GP periodogram plots.  False runs only 1 simulation (fast) and
+COMPUTE_FAP = True
+N_BOOT_GLS = 100 if COMPUTE_FAP else 1
 
 # Number of grid points per parameter axis in the gridsearch
-GRIDSEARCH_N_POINTS = 7
+GRIDSEARCH_N_POINTS = 5
 
 # Frequency grid limits
 # w0min is derived from the data timespan; w0max is set so that
@@ -67,7 +69,7 @@ XLIM_FULL = (0.0, 1.0)
 XLIM_ZOOM = (0.0, 0.1)
 
 #Oversampling of frequency grid by a factor of 10 compared to resolution of periodogram is recommended for precision and correct inference. 
-OVERSAMPLING_FACTOR = 10
+OVERSAMPLING_FACTOR = 1
 # Output CSV for GP periodogram results
 GP_RESULTS_CSV = f"{NAME}_optimized_1D_GP_periodogram.csv"
 
@@ -182,9 +184,7 @@ def main() -> None:
         freq=frequency,
         verbose=True,
     )
-    plot_gls_dlnl(gls.freq, gls.power, NAME,
-                  xlim_full=XLIM_FULL, xlim_zoom=XLIM_ZOOM)
-    plot_gls_diagnostics(gls, NAME)
+    
 
     # ------------------------------------------------------------------
     # 6. Bootstrap FAP for GLS
@@ -196,6 +196,12 @@ def main() -> None:
     print(f"  GLS FAP 1%  threshold  : {fap_1pct_gls:.3f} Δ lnL")
     print(f"  GLS FAP 10% threshold  : {fap_10pct_gls:.3f} Δ lnL")
 
+    plot_gls_dlnl(gls.freq, gls.power, NAME,
+                  xlim_full=XLIM_FULL, xlim_zoom=XLIM_ZOOM,
+                  fap_1pct=fap_1pct_gls if COMPUTE_FAP else None,
+                  fap_10pct=fap_10pct_gls if COMPUTE_FAP else None)
+    
+    plot_gls_diagnostics(gls, NAME)
 
     # ------------------------------------------------------------------
     # 8. Grid-search for GP initial parameters
@@ -232,21 +238,14 @@ def main() -> None:
     S0_values           = df_results["S0_1"].values
     lifetime0_values    = df_results["lifetime_1"].values
     jitter_values       = df_results["jitter"].values
-    null_log_like_arr   = df_results["null_log_like"].values
-    null_Q0_values      = df_results["null_Q_1"].values
-    null_S0_values      = df_results["null_S0_1"].values
-    null_lifetime0_values = 2.0 * df_results["null_Q_1"].values / df_results["w0"].values
-    null_jitter_values  = df_results["null_jitter"].values
+    
 
     if KERNEL == "double_sho":
         Frequency_val2        = df_results["Frequency_2"].values
         Q2_values             = df_results["Q_2"].values
         S2_values             = df_results["S0_2"].values
         lifetime2_values      = df_results["lifetime_2"].values
-        null_Q2_values        = df_results["null_Q_2"].values
-        null_S2_values        = df_results["null_S0_2"].values
-        null_lifetime2_values = 2.0 * df_results["null_Q_2"].values / df_results["w_2"].values
-
+        
     best_idx = int(df_results["delta_log_like"].idxmax())
     best_freq = Frequency_val[best_idx]
     best_period = 1.0 / best_freq
@@ -262,6 +261,8 @@ def main() -> None:
     plot_gp_periodogram(
         Frequency_val, delta_log_like, df_results, NAME,
         xlim_full=XLIM_FULL, xlim_zoom=XLIM_ZOOM,
+        fap_1pct=fap_1pct_gls if COMPUTE_FAP else None,
+        fap_10pct=fap_10pct_gls if COMPUTE_FAP else None,
     )
 
     if KERNEL == "double_sho":
