@@ -84,7 +84,6 @@ RESIDUALS_CSV = f"{NAME}_residuals_double_SHO.csv"
 from GP_Periodogram_functions import (
     compute_null_model,
     bootstrap_fap,
-    fit_single_sho,
     plot_timeseries,
     plot_gls_dlnl,
     plot_gls_diagnostics,
@@ -197,13 +196,6 @@ def main() -> None:
     print(f"  GLS FAP 1%  threshold  : {fap_1pct_gls:.3f} Δ lnL")
     print(f"  GLS FAP 10% threshold  : {fap_10pct_gls:.3f} Δ lnL")
 
-    # ------------------------------------------------------------------
-    # 7. Exploratory single-SHO fit (sanity check only, not saved)
-    # ------------------------------------------------------------------
-    print("[6/9] Exploratory single-SHO fit")
-    gp_sho, sho_log_like = fit_single_sho(t, y, yerr, weighted_mean)
-    print(f"  Single-SHO Δ lnL : {sho_log_like - null_log_likelihood:.3f}")
-    print(f"  Parameters       : {gp_sho.get_parameter_dict()}")
 
     # ------------------------------------------------------------------
     # 8. Grid-search for GP initial parameters

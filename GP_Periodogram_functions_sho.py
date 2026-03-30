@@ -409,8 +409,9 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
             c=df_results["fraction_RMS1[m/s]"],
             cmap="rainbow", s=10, edgecolor="none", zorder=2,
         )
-        cbar = fig.colorbar(sc, ax=ax)
-        cbar.set_label("RMS fraction of oscillator")
+        cbar = fig.colorbar(sc, cax=plt.gca().inset_axes([0.55, 0.93, 0.4, 0.035]), orientation="horizontal")
+        cbar.set_label('RMS fraction of oscillator', fontsize=10)
+        cbar.ax.tick_params(labelsize=10)
         ax.set_xlabel("Frequency of oscillator [1/d]")
         ax.set_ylabel("Δ lnL")
         ax.set_xlim(xlim)

@@ -150,47 +150,11 @@ def bootstrap_fap(t: np.ndarray,
     return float(thresholds[0]), float(thresholds[1])
 
 
-# ---------------------------------------------------------------------------
-# Single-SHO GP helper (used only for a quick exploratory fit)
-# ---------------------------------------------------------------------------
 
 def _neg_log_like(params: np.ndarray, y: np.ndarray, gp) -> float:
     gp.set_parameter_vector(params)
     return -gp.log_likelihood(y)
 
-
-def fit_single_sho(t: np.ndarray,
-                   y: np.ndarray,
-                   yerr: np.ndarray,
-                   weighted_mean: float) -> tuple:
-    """Fit a single SHO kernel as an exploratory sanity check.
-
-    Returns
-    -------
-    gp : celerite.GP
-        GP object set to the optimised parameters.
-    log_likelihood : float
-    """
-    Q = 1.20
-    w0 = 3.0
-    S0 = np.var(y) / (w0 * Q)
-    bounds = dict(log_S0=(-15, 15), log_Q=(-15, 15), log_omega0=(-15, 15))
-    kernel = terms.SHOTerm(
-        log_S0=np.log(S0), log_Q=np.log(Q), log_omega0=np.log(w0),
-        bounds=bounds,
-    )
-    gp = celerite.GP(kernel, mean=weighted_mean)
-    gp.compute(t, yerr)
-
-    r = minimize(
-        _neg_log_like,
-        gp.get_parameter_vector(),
-        method="L-BFGS-B",
-        bounds=gp.get_parameter_bounds(),
-        args=(y, gp),
-    )
-    gp.set_parameter_vector(r.x)
-    return gp, gp.log_likelihood(y)
 
 
 # ---------------------------------------------------------------------------
@@ -670,7 +634,7 @@ def plot_gls_dlnl(gls_freq: np.ndarray,
         ax.set_xlabel("Frequency [1/d]")
         ax.set_ylabel("Δ lnL")
         ax.set_xlim(xlim)
-        ax.grid(True, which="both", linestyle="--", alpha=0.6)
+        #ax.grid(True, which="both", linestyle="--", alpha=0.6)
         fig.tight_layout()
         fig.savefig(f"GLS_{name}_dlnL{suffix}.png")
         plt.close(fig)
@@ -721,8 +685,10 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
             c=df_results["fraction_RMS1[m/s]"],
             cmap="rainbow", s=10, edgecolor="none", zorder=2,
         )
-        cbar = fig.colorbar(sc, ax=ax)
-        cbar.set_label("RMS fraction of first oscillator")
+        # 2. Add a colorbar to explain what the colors represent
+        cbar = fig.colorbar(sc, cax=plt.gca().inset_axes([0.55, 0.93, 0.4, 0.035]), orientation="horizontal")
+        cbar.set_label('RMS fraction of first oscillator', fontsize=10)
+        cbar.ax.tick_params(labelsize=10)
         ax.set_xlabel("Frequency of first oscillator [1/d]")
         ax.set_ylabel("Δ lnL")
         ax.set_xlim(xlim)
