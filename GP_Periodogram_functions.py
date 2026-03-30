@@ -249,9 +249,9 @@ def gridsearch_initial_params(t: np.ndarray,
     optimal_df : pd.DataFrame
         One row per entry in *w0_list* with the best-fit initial parameters.
     """
-    log_S0_grid = np.linspace(-15, 10, n_points)
-    log_Q_grid = np.linspace(np.log(0.502), 10, n_points)
-    log_sigma_grid = np.linspace(-15, 10, n_points)
+    log_S0_grid = np.linspace(-15, 15, n_points)
+    log_Q_grid = np.linspace(np.log(0.502), 15, n_points)
+    log_sigma_grid = np.linspace(-15, 15, n_points)
 
     all_results = Parallel(n_jobs=-2)(
         delayed(_compute_for_w0_gridsearch)(

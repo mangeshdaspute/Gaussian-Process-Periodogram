@@ -38,14 +38,14 @@ import mlp  # local GLS implementation — required as-is
 # =============================================================================
 
 #Kernel model: "double_sho" uses two SHO terms; "single_sho" uses one.
-KERNEL = "single_sho"  # "single_sho" | "double_sho"
+KERNEL = "double_sho"  # "single_sho" | "double_sho"
 
-NAME = "activity RV asymmetric two spot region configuration double sho"+KERNEL
+NAME = "activity RV asymmetric two spot region configuration oversampled"+KERNEL
 #NAME = "timeseries single SHO kernel"+KERNEL
 
 
 # Path to input time series CSV (must contain columns 't', 'y', 'yerr')
-TIMESERIES_CSV = "timeseries single SHO kernel.csv" #"timeseries activity RV asymmetric TWO spot region configuration.csv" # 
+TIMESERIES_CSV = "timeseries activity RV asymmetric TWO spot region configuration.csv" # "timeseries single SHO kernel.csv" 
 
 #path to store girdsearch results. 
 GRIDSEARCH_CSV = f"optimal_parameters {NAME}.csv"
@@ -57,7 +57,7 @@ COMPUTE_FAP = True
 N_BOOT_GLS = 100 if COMPUTE_FAP else 1
 
 # Number of grid points per parameter axis in the gridsearch
-GRIDSEARCH_N_POINTS = 5
+GRIDSEARCH_N_POINTS = 7
 
 # Frequency grid limits
 # w0min is derived from the data timespan; w0max is set so that
