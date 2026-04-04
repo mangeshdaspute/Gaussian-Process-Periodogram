@@ -78,8 +78,8 @@ def compute_null_model(y: np.ndarray,
     weighted_mean : float
     optimal_jitter : float  (standard deviation, not variance)
     """
-    min_ln = np.log(1e-10)
-    max_ln = np.log(10.0 * np.max(yerr ** 2))
+    min_ln = np.log(1e-15)
+    max_ln = np.log(100.0 * np.max(yerr ** 2))
 
     result = minimize_scalar(
         _neg_null_log_likelihood_with_jitter,
@@ -363,8 +363,8 @@ def _process_single_w0(w0: float,
     w_2 = 2.0 * w0
     jitter = np.exp(params["kernel:terms[2]:log_sigma"])
 
+    
     delta_log_like = gp.log_likelihood(y) - null_log_likelihood
-
 
     return [
         S0_1, S0_2, Q_1, Q_2, delta_log_like, w0, w_2, jitter,
