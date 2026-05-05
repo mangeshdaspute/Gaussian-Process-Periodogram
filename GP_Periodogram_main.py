@@ -42,12 +42,12 @@ import mlp  # local GLS implementation — required as-is
 # fewer free hyper-parameter than "double_sho").
 KERNEL = "dsho"  # "single_sho" | "double_sho" | "dsho"
 
-NAME = KERNEL+" paper sinusoidal keplerian random semi 1 300 timestamps 1000"
+NAME = KERNEL+" timeseries activity RV asymmetric TWO spot region configuration"
 #NAME = "timeseries single SHO kernel"+KERNEL
 
 
 # Path to input time series CSV (must contain columns 't', 'y', 'yerr')
-TIMESERIES_CSV = "paper planet 10 semi 1 timestamps288 300uniform random uncertainity 1 noise 1.414 null lnL FAP upto frequency 1 jitter 1 all frequencies offsetgridsearch results.csv" # "timeseries single SHO kernel.csv" 
+TIMESERIES_CSV = "timeseries activity RV asymmetric TWO spot region configuration.csv" # "timeseries single SHO kernel.csv" 
 
 #path to store girdsearch results. 
 GRIDSEARCH_CSV = f"optimal_parameters {NAME}.csv"
@@ -55,7 +55,7 @@ GRIDSEARCH_CSV = f"optimal_parameters {NAME}.csv"
 RUN_GRIDSEARCH = True  # Run gridsearch on intial parameters if True. It is slow and reliable. False flag uses same initial parameters for all frequencies for faster execution. 
 
 # GLS and GP periodogram plots.  False runs only 1 simulation (fast) and
-COMPUTE_FAP = False
+COMPUTE_FAP = True
 N_BOOT_GLS = 100 if COMPUTE_FAP else 1
 
 # Number of grid points per parameter axis in the gridsearch
