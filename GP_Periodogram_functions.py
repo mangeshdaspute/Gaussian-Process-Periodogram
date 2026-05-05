@@ -249,9 +249,9 @@ def gridsearch_initial_params(t: np.ndarray,
     optimal_df : pd.DataFrame
         One row per entry in *w0_list* with the best-fit initial parameters.
     """
-    log_S0_grid = np.linspace(-15, 15, n_points)
-    log_Q_grid = np.linspace(np.log(0.502), 15, n_points)
-    log_sigma_grid = np.linspace(-15, 15, n_points)
+    log_S0_grid = np.linspace(-10, 10, n_points)
+    log_Q_grid = np.linspace(np.log(0.502), 10, n_points)
+    log_sigma_grid = np.linspace(-10, np.log(2*rms_scatter), n_points)
 
     all_results = Parallel(n_jobs=-2)(
         delayed(_compute_for_w0_gridsearch)(
@@ -514,7 +514,7 @@ def gp_predict_best(t: np.ndarray,
 
 def plot_dt(dt: pd.Series, name: str) -> None:
     """Plot time sampling intervals vs observation index."""
-    fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
     ax.plot(dt, "r.")
     ax.set_yscale("log")
     ax.set_ylabel("dt [d]")
@@ -527,7 +527,7 @@ def plot_dt(dt: pd.Series, name: str) -> None:
 
 def plot_uncertainty(yerr: np.ndarray, name: str) -> None:
     """Plot per-observation RV uncertainty vs observation index."""
-    fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
     ax.plot(yerr, "r.")
     ax.set_xlabel("Index of observation")
     ax.set_ylabel("RV uncertainty [m/s]")
@@ -543,7 +543,7 @@ def plot_timeseries(t: np.ndarray,
                     rms_scatter: float,
                     name: str) -> None:
     """Plot the RV time series with error bars."""
-    fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
     ax.errorbar(
         t, y, yerr=yerr, fmt=".k", capsize=0,
         label=f"RMS scatter = {rms_scatter:.3f} m/s",
@@ -551,7 +551,7 @@ def plot_timeseries(t: np.ndarray,
     ax.set_xlabel("Time [d]")
     ax.set_ylabel("RV [m/s]")
     ax.legend()
-    ax.grid(True)
+    #ax.grid(True)
     fig.tight_layout()
     fig.savefig(f"{name} timeseries.png")
     plt.close(fig)
@@ -563,7 +563,7 @@ def plot_gls_astropy(frequency: np.ndarray,
                      power_fap_10pct: float,
                      name: str) -> None:
     """Plot the Astropy GLS periodogram with FAP levels."""
-    fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
     ax.plot(frequency, power, color="black", lw=0.5)
     ax.axhline(
         power_fap_1pct, color="blue", linestyle="-",
@@ -576,7 +576,7 @@ def plot_gls_astropy(frequency: np.ndarray,
     ax.set_xlabel("Frequency [1/days]")
     ax.set_ylabel("Power")
     ax.legend()
-    ax.grid(True)
+    #ax.grid(True)
     fig.tight_layout()
     fig.savefig(f"GLS_astropy_{name}.png")
     plt.close(fig)
@@ -597,7 +597,7 @@ def plot_gls_dlnl(gls_freq: np.ndarray,
         If provided, draw horizontal FAP threshold lines on the plot.
     """
     for xlim, suffix in [(xlim_full, ""), (xlim_zoom, "_zoomed")]:
-        fig, ax = plt.subplots(figsize=(10, 6), dpi=200)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
         ax.plot(gls_freq, gls_power, "k-")
         if fap_1pct is not None:
             ax.axhline(fap_1pct, color="black", linestyle="--",
@@ -625,7 +625,7 @@ def plot_gls_diagnostics(gls, name: str) -> None:
         (offsets, "Offset [m/s]", "offsets"),
         (jitters, "Jitter [m/s]", "jitters"),
     ]:
-        fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
         ax.plot(gls.freq, values)
         ax.set_xlabel("Frequency [1/d]")
         ax.set_ylabel(ylabel)
@@ -660,13 +660,14 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
         If provided, draw horizontal FAP threshold lines on the plot.
     """
     for xlim, suffix in [(xlim_full, ""), (xlim_zoom, "_zoomed")]:
-        fig, ax = plt.subplots(figsize=(10, 6), dpi=200)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
         ax.plot(Frequency_val, delta_log_like, color="gray",
                 linewidth=0.5, alpha=0.5, zorder=1)
         sc = ax.scatter(
             Frequency_val, delta_log_like,
             c=df_results["fraction_RMS1[m/s]"],
             cmap="rainbow", s=10, edgecolor="none", zorder=2,
+            vmin=0, vmax=1.2,
         )
         cbar = fig.colorbar(sc, cax=plt.gca().inset_axes([0.30, 0.96, 0.4, 0.035]),
                     orientation="horizontal") #[left, bottom, width, height]
@@ -683,9 +684,9 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
         ax.set_xlabel("Frequency of first oscillator [1/d]")
         ax.set_ylabel("Δ lnL")
         ax.set_xlim(xlim)
-        ax.grid(which="major", linestyle="-")
-        ax.minorticks_on()
-        ax.grid(which="minor", color="#DDDDDD", linestyle="--", alpha=0.6)
+        #ax.grid(which="major", linestyle="-")
+        #ax.minorticks_on()
+        #ax.grid(which="minor", color="#DDDDDD", linestyle="--", alpha=0.6)
         fig.tight_layout()
         fig.savefig(f"GP_periodogram_{name}{suffix}.png")
         plt.close(fig)
@@ -703,7 +704,7 @@ def plot_lifetimes_transparent(Frequency_val: np.ndarray,
     """Plot GP kernel lifetimes using RMS fraction as marker transparency,
     at full range and zoomed in."""
     for xlim, suffix in [(xlim_full, ""), (xlim_zoom, "_zoomed")]:
-        fig, ax = plt.subplots(figsize=(10, 6), dpi=200)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
 
         # First oscillator — red markers
         ax.plot(Frequency_val, lifetime0_values,
@@ -733,9 +734,9 @@ def plot_lifetimes_transparent(Frequency_val: np.ndarray,
         ax.set_ylabel("Lifetime [d]")
         ax.set_xlim(xlim)
         ax.set_yscale("log")
-        ax.grid(which="major", linestyle="-")
-        ax.minorticks_on()
-        ax.grid(which="minor", color="#DDDDDD", linestyle="--", alpha=0.6)
+        #ax.grid(which="major", linestyle="-")
+        #ax.minorticks_on()
+        #ax.grid(which="minor", color="#DDDDDD", linestyle="--", alpha=0.6)
         leg = ax.legend()
         for handle in leg.legend_handles:
             handle.set_alpha(1.0)
@@ -756,7 +757,7 @@ def plot_lifetimes_colored(Frequency_val: np.ndarray,
     """Plot GP kernel lifetimes using a rainbow colourmap for RMS fraction,
     at full range and zoomed in."""
     for xlim, suffix in [(xlim_full, ""), (xlim_zoom, "_zoomed")]:
-        fig, ax = plt.subplots(figsize=(10, 6), dpi=200)
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
 
         ax.plot(Frequency_val, lifetime0_values,
                 color="gray", linewidth=0.5, alpha=0.5, zorder=2)
@@ -765,6 +766,7 @@ def plot_lifetimes_colored(Frequency_val: np.ndarray,
             c=df_results["fraction_RMS1[m/s]"],
             cmap="rainbow", s=10, edgecolor="none", zorder=4,
             label="First Oscillator",
+            vmin=0, vmax=1.2,
         )
         cbar = fig.colorbar(sc1, ax=ax)
         cbar.set_label("Fraction of RMS — first oscillator")
@@ -784,9 +786,9 @@ def plot_lifetimes_colored(Frequency_val: np.ndarray,
         ax.set_ylabel("Lifetime [d]")
         ax.set_xlim(xlim)
         ax.set_yscale("log")
-        ax.grid(which="major", linestyle="-")
-        ax.minorticks_on()
-        ax.grid(which="minor", color="#DDDDDD", linestyle="--", alpha=0.6)
+        #ax.grid(which="major", linestyle="-")
+        #ax.minorticks_on()
+        #ax.grid(which="minor", color="#DDDDDD", linestyle="--", alpha=0.6)
         ax.legend()
         fig.tight_layout()
         fig.savefig(f"lifetimes_{name}_colored{suffix}.png")
@@ -901,8 +903,17 @@ def plot_gp_prediction(t: np.ndarray,
                        mu: np.ndarray,
                        std: np.ndarray,
                        residuals: np.ndarray,
+                       gls,
                        name: str) -> None:
     """Plot the GP prediction over the data and the residuals below it."""
+
+    y_fit_gls  = gls.sinmod(t_pred)        # uses hpstat internally
+
+    #residuals_gls = y - y_fit_gls
+    y_fit_gls_data  = gls.sinmod(t)        # uses hpstat internally
+    residuals_gls_data = y - y_fit_gls_data
+    rms_scatter_residuals_gls_data = np.sqrt(np.mean((residuals_gls_data - np.mean(residuals_gls_data))**2))
+
     fig = plt.figure(figsize=(10, 6), dpi=200)
     gs = gridspec.GridSpec(3, 1)
 
@@ -911,15 +922,19 @@ def plot_gp_prediction(t: np.ndarray,
     ax1.plot(t_pred, mu, "r-", label="GP prediction")
     ax1.fill_between(t_pred, mu - std, mu + std,
                      color="r", alpha=0.2, label="1σ uncertainty")
+    ax1.plot(t_pred, y_fit_gls, 'b--', linewidth=1.5, label=f'GLS fit')
+
     ax1.set_xlabel("Time [d]")
     ax1.set_ylabel("RV [m/s]")
     ax1.legend()
 
     ax2 = fig.add_subplot(gs[2, 0])
     gp_rms = np.sqrt(np.mean(residuals ** 2))
-    ax2.scatter(t, residuals, c="k", s=10,
-                label=f"GP residual RMS = {gp_rms:.2f} m/s")
-    ax2.axhline(0, color="r", linestyle="--")
+    ax2.scatter(t, residuals, c="r", s=10,
+                label=f"GP residual RMS = {gp_rms:.2f}")
+    ax2.scatter(t, residuals_gls_data, c='b', s=10, label = f'GLS residual RMS = {rms_scatter_residuals_gls_data:.2f}')
+
+    ax2.axhline(0, color="k", linestyle="--")
     ax2.set_xlabel("Time [d]")
     ax2.set_ylabel("Residuals [m/s]")
     ax2.legend()

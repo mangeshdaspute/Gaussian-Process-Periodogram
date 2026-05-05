@@ -28,7 +28,7 @@ import os
 import numpy as np
 import pandas as pd
 from astropy.timeseries import LombScargle
-
+import random
 import mlp  # local GLS implementation — required as-is
 
 
@@ -37,15 +37,17 @@ import mlp  # local GLS implementation — required as-is
 # CONFIG — edit this block to point at your data and tune the run
 # =============================================================================
 
-#Kernel model: "double_sho" uses two SHO terms; "single_sho" uses one.
-KERNEL = "double_sho"  # "single_sho" | "double_sho"
+#Kernel model: "double_sho" uses two SHO terms; "single_sho" uses one;
+# "dsho" is a constrained double-SHO with Q2=2*Q1 (shared lifetime, one
+# fewer free hyper-parameter than "double_sho").
+KERNEL = "dsho"  # "single_sho" | "double_sho" | "dsho"
 
-NAME = "activity RV asymmetric two spot region configuration oversampled"+KERNEL
+NAME = KERNEL+" paper sinusoidal keplerian random semi 1 300 timestamps 1000"
 #NAME = "timeseries single SHO kernel"+KERNEL
 
 
 # Path to input time series CSV (must contain columns 't', 'y', 'yerr')
-TIMESERIES_CSV = "timeseries activity RV asymmetric TWO spot region configuration.csv" # "timeseries single SHO kernel.csv" 
+TIMESERIES_CSV = "paper planet 10 semi 1 timestamps288 300uniform random uncertainity 1 noise 1.414 null lnL FAP upto frequency 1 jitter 1 all frequencies offsetgridsearch results.csv" # "timeseries single SHO kernel.csv" 
 
 #path to store girdsearch results. 
 GRIDSEARCH_CSV = f"optimal_parameters {NAME}.csv"
@@ -53,23 +55,23 @@ GRIDSEARCH_CSV = f"optimal_parameters {NAME}.csv"
 RUN_GRIDSEARCH = True  # Run gridsearch on intial parameters if True. It is slow and reliable. False flag uses same initial parameters for all frequencies for faster execution. 
 
 # GLS and GP periodogram plots.  False runs only 1 simulation (fast) and
-COMPUTE_FAP = True
+COMPUTE_FAP = False
 N_BOOT_GLS = 100 if COMPUTE_FAP else 1
 
 # Number of grid points per parameter axis in the gridsearch
-GRIDSEARCH_N_POINTS = 7
+GRIDSEARCH_N_POINTS = 15
 
 # Frequency grid limits
 # w0min is derived from the data timespan; w0max is set so that
 # frequency ≤ 1/day (aliasing starts above the Nyquist of daily sampling).
-W0MAX_PERIOD_DAYS = 1.0  # minimum period to probe [days]
+W0MAX_PERIOD_DAYS = 1.00  # minimum period to probe [days]
 
 # Frequency axis limits for zoomed plots
 XLIM_FULL = (0.0, 1.0)
 XLIM_ZOOM = (0.0, 0.1)
 
 #Oversampling of frequency grid by a factor of 10 compared to resolution of periodogram is recommended for precision and correct inference. 
-OVERSAMPLING_FACTOR = 1
+OVERSAMPLING_FACTOR = 10
 # Output CSV for GP periodogram results
 GP_RESULTS_CSV = f"{NAME}_optimized_1D_GP_periodogram.csv"
 
@@ -112,8 +114,18 @@ elif KERNEL == "single_sho":
         plot_gp_periodogram,
         plot_lifetimes_transparent,
     )
+elif KERNEL == "dsho":
+    from GP_Periodogram_functions_dsho import (
+        gridsearch_initial_params,
+        compute_initial_params_guess,
+        run_gp_periodogram,
+        build_results_dataframe,
+        gp_predict_best,
+        plot_gp_periodogram,
+        plot_lifetimes_transparent,
+    )
 else:
-    raise ValueError(f"Unknown KERNEL: '{KERNEL}'. Choose 'single_sho' or 'double_sho'.")
+    raise ValueError(f"Unknown KERNEL: '{KERNEL}'. Choose 'single_sho', 'double_sho', or 'dsho'.")
 
 
 def main() -> None:
@@ -124,8 +136,13 @@ def main() -> None:
     df_raw = pd.read_csv(TIMESERIES_CSV)
     t = df_raw["t"].values
     y = df_raw["y"].values
+    #y =8* np.sin(2*np.pi*t/10)
     yerr = df_raw["yerr"].values
+    #jitter =1 
+    random.seed(42)
 
+    #noise = np.random.normal(loc=0, scale=np.sqrt(yerr**2+jitter**2), size=t.shape)
+    #y = y+noise
     #dt = pd.Series(t).diff().dropna()
     #median_dt = float(np.median(dt))
     rms_scatter = float(np.sqrt(np.mean((y - np.mean(y)) ** 2)))
@@ -156,7 +173,7 @@ def main() -> None:
     # 4. Frequency grid
     # ------------------------------------------------------------------
     timespan_obs = float(np.max(t) - np.min(t))
-    w0min = 2*np.pi / (timespan_obs)
+    w0min = 2*np.pi / (2*timespan_obs)
     w0max = 2.0 * np.pi / W0MAX_PERIOD_DAYS
     w0_list = np.arange(w0min, w0max, w0min)
     frequency = w0_list / (2.0 * np.pi)
@@ -245,6 +262,11 @@ def main() -> None:
         Q2_values             = df_results["Q_2"].values
         S2_values             = df_results["S0_2"].values
         lifetime2_values      = df_results["lifetime_2"].values
+    elif KERNEL == "dsho":
+        Frequency_val2        = df_results["Frequency_2"].values
+        Q2_values             = df_results["Q_2"].values
+        S2_values             = df_results["S0_2"].values
+        lifetime2_values      = df_results["lifetime_2"].values
         
     best_idx = int(df_results["delta_log_like"].idxmax())
     best_freq = Frequency_val[best_idx]
@@ -273,6 +295,7 @@ def main() -> None:
             xlim_full=XLIM_FULL, xlim_zoom=XLIM_ZOOM,
         )
     else:
+        # single_sho and dsho both use the single-lifetime signature
         plot_lifetimes_transparent(
             Frequency_val,
             lifetime0_values,
@@ -304,10 +327,8 @@ def main() -> None:
     # 11. GP prediction and residuals at best-fit frequency
     # ------------------------------------------------------------------
     print("    Building GP prediction at best-fit frequency")
-    t_pred, mu, std, residuals = gp_predict_best(
-        t, y, yerr, df_results, weighted_mean
-    )
-    plot_gp_prediction(t, y, yerr, t_pred, mu, std, residuals, NAME)
+    t_pred, mu, std, residuals= gp_predict_best(t, y, yerr, df_results, weighted_mean)
+    plot_gp_prediction(t, y, yerr, t_pred, mu, std, residuals, gls,NAME)
 
     pd.DataFrame({
         "t[d]": t,
