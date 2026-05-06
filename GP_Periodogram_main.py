@@ -59,7 +59,7 @@ COMPUTE_FAP = True
 N_BOOT_GLS = 100 if COMPUTE_FAP else 1
 
 # Number of grid points per parameter axis in the gridsearch
-GRIDSEARCH_N_POINTS = 15
+GRIDSEARCH_N_POINTS = 5
 
 # Frequency grid limits
 # w0min is derived from the data timespan; w0max is set so that
