@@ -173,7 +173,7 @@ def main() -> None:
     # 4. Frequency grid
     # ------------------------------------------------------------------
     timespan_obs = float(np.max(t) - np.min(t))
-    w0min = 2*np.pi / (2*timespan_obs)
+    w0min = 2*np.pi / (timespan_obs)
     w0max = 2.0 * np.pi / W0MAX_PERIOD_DAYS
     w0_list = np.arange(w0min, w0max, w0min)
     frequency = w0_list / (2.0 * np.pi)
