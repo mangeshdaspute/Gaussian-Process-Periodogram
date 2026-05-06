@@ -381,12 +381,13 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
     """
     for xlim, suffix in [(xlim_full, ""), (xlim_zoom, "_zoomed")]:
         fig, ax = plt.subplots(figsize=(10, 6), dpi=200)
+        cmap = "viridis" if colorblind_friendly else "rainbow" 
         ax.plot(Frequency_val, delta_log_like, color="gray",
                 linewidth=0.5, alpha=0.5, zorder=1)
         sc = ax.scatter(
             Frequency_val, delta_log_like,
             c=df_results["fraction_RMS1[m/s]"],
-            cmap="rainbow", s=10, edgecolor="none", zorder=2,
+            cmap=cmap, s=10, edgecolor="none", zorder=2,
         )
         cbar = fig.colorbar(sc, cax=plt.gca().inset_axes([0.30, 0.96, 0.4, 0.035]),
                     orientation="horizontal")#[left, bottom, width, height]
