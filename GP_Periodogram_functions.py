@@ -650,7 +650,8 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
                         xlim_full: tuple = (0.0, 1.0),
                         xlim_zoom: tuple = (0.0, 0.1),
                         fap_1pct: float | None = None,
-                        fap_10pct: float | None = None) -> None:
+                        fap_10pct: float | None = None,
+                        colorblind_friendly: bool = False) -> None:
     """Plot the GP periodogram coloured by the RMS fraction of the first
     oscillator, at full range and zoomed in.
 
@@ -661,13 +662,14 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
     """
     for xlim, suffix in [(xlim_full, ""), (xlim_zoom, "_zoomed")]:
         fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
+        cmap = "viridis" if colorblind_friendly else "rainbow" 
         ax.plot(Frequency_val, delta_log_like, color="gray",
                 linewidth=0.5, alpha=0.5, zorder=1)
         sc = ax.scatter(
             Frequency_val, delta_log_like,
             c=df_results["fraction_RMS1[m/s]"],
-            cmap="rainbow", s=10, edgecolor="none", zorder=2,
-            vmin=0, vmax=1.2,
+            cmap=cmap, s=10, edgecolor="none", zorder=2,
+            vmin=0, vmax=1.1,
         )
         cbar = fig.colorbar(sc, cax=plt.gca().inset_axes([0.30, 0.96, 0.4, 0.035]),
                     orientation="horizontal") #[left, bottom, width, height]
@@ -700,12 +702,13 @@ def plot_lifetimes_transparent(Frequency_val: np.ndarray,
                                 timespan_obs: float,
                                 name: str,
                                 xlim_full: tuple = (0.0, 1.0),
-                                xlim_zoom: tuple = (0.0, 0.1)) -> None:
+                                xlim_zoom: tuple = (0.0, 0.1),
+                                colorblind_friendly: bool = False) -> None:
     """Plot GP kernel lifetimes using RMS fraction as marker transparency,
     at full range and zoomed in."""
     for xlim, suffix in [(xlim_full, ""), (xlim_zoom, "_zoomed")]:
         fig, ax = plt.subplots(figsize=(8, 5), dpi=200)
-
+        
         # First oscillator — red markers
         ax.plot(Frequency_val, lifetime0_values,
                 color="red", linewidth=0.5, alpha=0.5, zorder=2)
@@ -766,7 +769,7 @@ def plot_lifetimes_colored(Frequency_val: np.ndarray,
             c=df_results["fraction_RMS1[m/s]"],
             cmap="rainbow", s=10, edgecolor="none", zorder=4,
             label="First Oscillator",
-            vmin=0, vmax=1.2,
+            vmin=0, vmax=1.1,
         )
         cbar = fig.colorbar(sc1, ax=ax)
         cbar.set_label("Fraction of RMS — first oscillator")

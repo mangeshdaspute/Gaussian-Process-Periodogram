@@ -55,11 +55,11 @@ GRIDSEARCH_CSV = f"optimal_parameters {NAME}.csv"
 RUN_GRIDSEARCH = True  # Run gridsearch on intial parameters if True. It is slow and reliable. False flag uses same initial parameters for all frequencies for faster execution. 
 
 # GLS and GP periodogram plots.  False runs only 1 simulation (fast) and
-COMPUTE_FAP = True
+COMPUTE_FAP = False
 N_BOOT_GLS = 100 if COMPUTE_FAP else 1
 
 # Number of grid points per parameter axis in the gridsearch
-GRIDSEARCH_N_POINTS = 5
+GRIDSEARCH_N_POINTS = 7
 
 # Frequency grid limits
 # w0min is derived from the data timespan; w0max is set so that
@@ -71,7 +71,9 @@ XLIM_FULL = (0.0, 1.0)
 XLIM_ZOOM = (0.0, 0.1)
 
 #Oversampling of frequency grid by a factor of 10 compared to resolution of periodogram is recommended for precision and correct inference. 
-OVERSAMPLING_FACTOR = 10
+OVERSAMPLING_FACTOR = 1.0
+
+COLORBLIND_FRIENDLY = True  #Color coding (True = viridis, False = rainbow)
 # Output CSV for GP periodogram results
 GP_RESULTS_CSV = f"{NAME}_optimized_1D_GP_periodogram.csv"
 
@@ -173,7 +175,7 @@ def main() -> None:
     # 4. Frequency grid
     # ------------------------------------------------------------------
     timespan_obs = float(np.max(t) - np.min(t))
-    w0min = 2*np.pi / (timespan_obs)
+    w0min = 2*np.pi / (2*timespan_obs)
     w0max = 2.0 * np.pi / W0MAX_PERIOD_DAYS
     w0_list = np.arange(w0min, w0max, w0min)
     frequency = w0_list / (2.0 * np.pi)
@@ -285,6 +287,8 @@ def main() -> None:
         xlim_full=XLIM_FULL, xlim_zoom=XLIM_ZOOM,
         fap_1pct=fap_1pct_gls if COMPUTE_FAP else None,
         fap_10pct=fap_10pct_gls if COMPUTE_FAP else None,
+        colorblind_friendly=COLORBLIND_FRIENDLY, 
+
     )
 
     if KERNEL == "double_sho":
@@ -301,6 +305,7 @@ def main() -> None:
             lifetime0_values,
             df_results, timespan_obs, NAME,
             xlim_full=XLIM_FULL, xlim_zoom=XLIM_ZOOM,
+            colorblind_friendly=COLORBLIND_FRIENDLY,
         )
 
     #plot_lifetimes_colored(
