@@ -71,14 +71,14 @@ XLIM_FULL = (0.0, 1.0)
 XLIM_ZOOM = (0.0, 0.1)
 
 #Oversampling of frequency grid by a factor of 10 compared to resolution of periodogram is recommended for precision and correct inference. 
-OVERSAMPLING_FACTOR = 1.0
+OVERSAMPLING_FACTOR = 10.0
 
-COLORBLIND_FRIENDLY = True  #Color coding (True = viridis, False = rainbow)
+COLORBLIND_FRIENDLY = False  #Color coding (True = viridis, False = rainbow)
 # Output CSV for GP periodogram results
 GP_RESULTS_CSV = f"{NAME}_optimized_1D_GP_periodogram.csv"
 
 # Residuals CSV
-RESIDUALS_CSV = f"{NAME}_residuals_double_SHO.csv"
+RESIDUALS_CSV = f"{NAME}_residuals_{Kernel}.csv"
 
 # =============================================================================
 # END CONFIG
