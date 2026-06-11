@@ -138,6 +138,9 @@ Performs the full nested grid search over kernel parameters at a single trial an
 | lifetime | > 10 * timespan | period of oscillator to 10 * timespan | > 10 * timespan |
 | RMS fraction of second oscillator | ≈ 0 | Significant |  Significant |
 | Which Oscillator has higher RMS fraction | First | Second |  First |
+| dlnL compared to GLS | lower | significantly higher | slightly higher |
+
+RMS fraction and amplitude of the second oscillator increases with increasing eccentricity of keplerian orbit.  
 
 
 
