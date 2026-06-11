@@ -62,7 +62,7 @@ where `ω` is angular frequency, `S` is the power spectral density amplitude, `Q
 - **Parallel execution** by default using all available CPU cores via `joblib`.
 - Outputs CSV files with full results per frequency and diagnostic plots.
 - Single SHO kernel mode also available for general quasi-periodic signal detection beyond astrophysics.
-- double SHO kernel mode also available for signals with harmonic and periodic and quasi periodic contribution. eq. doubly synchronous star planet system. 
+- double SHO kernel mode also available for signals with harmonic, periodic and quasi periodic contribution. eg. doubly synchronous star planet system. 
 
 ---
 
