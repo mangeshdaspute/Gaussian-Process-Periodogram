@@ -78,7 +78,7 @@ COLORBLIND_FRIENDLY = False  #Color coding (True = viridis, False = rainbow)
 GP_RESULTS_CSV = f"{NAME}_optimized_1D_GP_periodogram.csv"
 
 # Residuals CSV
-RESIDUALS_CSV = f"{NAME}_residuals_{Kernel}.csv"
+RESIDUALS_CSV = f"{NAME}_residuals_{KERNEL}.csv"
 
 # =============================================================================
 # END CONFIG
