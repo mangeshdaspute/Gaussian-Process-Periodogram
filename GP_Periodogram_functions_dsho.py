@@ -189,9 +189,9 @@ def gridsearch_initial_params(t: np.ndarray,
     """
     s0guessMax=1 
 
-    log_S0_grid   = np.linspace(-14.5, 14.5, n_points)
-    log_Q_grid    = np.linspace(np.log(1.), 14.5, n_points-3) #np.log((    max(t) - min(t)  ))
-    log_sigma_grid = np.linspace(np.log(rms_scatter/10), np.log(rms_scatter), n_points-3)
+    log_S0_grid   = np.linspace(-14.5, np.log(rms_scatter*10), n_points)
+    log_Q_grid    = np.linspace(np.log(1.), 14.5, n_points-2) #np.log((    max(t) - min(t)  ))
+    log_sigma_grid = np.linspace(np.log(rms_scatter/10), np.log(rms_scatter), n_points-2)
     all_results = Parallel(n_jobs=-1)(
         delayed(_compute_for_w0_gridsearch)(
             w0, t, y, yerr, weighted_mean, null_log_likelihood,
