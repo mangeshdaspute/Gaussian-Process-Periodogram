@@ -115,6 +115,11 @@ def _compute_for_w0_gridsearch(w0: float,
             log_Q2 = log_Q1 + np.log(2.0)
             for log_S0_2 in log_S0_grid:
                 for log_sigma in log_sigma_grid:
+
+                    if w0>10 and log_Q1<(np.log(5*w0+1)):
+
+
+                        continue
                     gp.set_parameter_vector(
                         [log_S0_1, log_Q1, log_S0_2, log_Q2, log_sigma]
                     )
@@ -183,11 +188,11 @@ def gridsearch_initial_params(t: np.ndarray,
         One row per entry in *w0_list* with the best-fit initial parameters.
     """
     s0guessMax=1 
-    log_S0_grid   = np.linspace(-14, 14, n_points)
-    log_Q_grid    = np.linspace(np.log(0.502), 14, n_points)
-    log_sigma_grid = np.linspace(np.log(rms_scatter/100), np.log(rms_scatter), n_points-2)
 
-    all_results = Parallel(n_jobs=-2)(
+    log_S0_grid   = np.linspace(-14.5, 14.5, n_points)
+    log_Q_grid    = np.linspace(np.log(1.), 14.5, n_points-3) #np.log((    max(t) - min(t)  ))
+    log_sigma_grid = np.linspace(np.log(rms_scatter/10), np.log(rms_scatter), n_points-3)
+    all_results = Parallel(n_jobs=-1)(
         delayed(_compute_for_w0_gridsearch)(
             w0, t, y, yerr, weighted_mean, null_log_likelihood,
             log_S0_grid, log_Q_grid, log_sigma_grid,
@@ -210,7 +215,7 @@ def gridsearch_initial_params(t: np.ndarray,
     ax.set_ylabel("log Q")
     ax.legend()
     ax.set_title("Optimal Q1 vs frequency (dSHO: Q2 = 2×Q1)")
-    fig.savefig(f"Q_vs_frequency {name}.png", dpi=300)
+    fig.savefig(f"Q_vs_frequency {name}.png", dpi=200)
     plt.close(fig)
 
     # Diagnostic: S0 and S1 vs frequency
@@ -230,7 +235,7 @@ def gridsearch_initial_params(t: np.ndarray,
     ax.set_ylabel("log_S")
     ax.legend()
     ax.set_title("Optimal log_S0 log_S1 vs frequency")
-    fig.savefig(f"logS0_log_S1_vs_frequency {name}.png", dpi=300)
+    fig.savefig(f"logS0_log_S1_vs_frequency {name}.png", dpi=200)
     plt.close(fig)
 
     # Diagnostic: Q1 vs frequency
@@ -245,7 +250,7 @@ def gridsearch_initial_params(t: np.ndarray,
     ax.set_ylabel("log Jitter")
     ax.legend()
     ax.set_title("Optimal log Jitter vs frequency")
-    fig.savefig(f"log Jitter_vs_frequency {name}.png", dpi=300)
+    fig.savefig(f"log Jitter_vs_frequency {name}.png", dpi=200)
     plt.close(fig)
 
     return optimal_df
@@ -255,28 +260,8 @@ def gridsearch_initial_params(t: np.ndarray,
 # GP periodogram — per-frequency optimisation — dSHO
 # ---------------------------------------------------------------------------
 
-def _process_single_w0(w0: float,
-                        y: np.ndarray,
-                        t: np.ndarray,
-                        yerr: np.ndarray,
-                        weighted_mean: float,
-                        null_log_likelihood: float,
-                        df_initial: pd.DataFrame) -> list:
-    """Optimise the dSHO GP kernel at a fixed angular frequency *w0*.
-
-    Uses the pre-computed grid-search result (``df_initial``) to warm-start
-    the L-BFGS-B optimisation over 4 free parameters:
-        [log_S0_1, log_Q1, log_S0_2, log_sigma]
-
-    log_Q2 is derived internally as log_Q1 + ln(2) at every function
-    evaluation.
-
-    Returns
-    -------
-    list
-        [S0_1, S0_2, Q_1, Q_2, delta_log_like, w0, w_2, jitter]
-    """
-    log_Q_lowest = np.log(0.501)
+def _process_single_w0(w0, y, t, yerr, weighted_mean, null_log_likelihood, df_initial):
+    log_Q_lowest = np.log(max(0.51, 5.0 * w0))
 
     # -- Retrieve warm-start parameters from the grid-search table ----------
     closest_idx = (df_initial["w0"] - w0).abs().idxmin()
@@ -285,65 +270,81 @@ def _process_single_w0(w0: float,
     log_S0_2  = float(df_initial.loc[closest_idx, "log_S0_2"])
     log_sigma = float(df_initial.loc[closest_idx, "log_sigma"])
 
-    # -- Build the kernel (Q2 is not frozen; managed via full param vector) -
-    log_Q2 = log_Q1 + np.log(2.0)
+    # -- Sanitize: replace NaN/inf with safe fallback values ----------------
+    if not np.isfinite(log_Q1):
+        log_Q1 = np.log(0.51)          # Q = 1, safely above 0.51
+    if not np.isfinite(log_S0_1):
+        log_S0_1 = 0.0
+    if not np.isfinite(log_S0_2):
+        log_S0_2 = 0.0
+    if not np.isfinite(log_sigma):
+        log_sigma = -2.0
+
+    # Clamp log_Q1 so that log_Q2 = log_Q1 + log(2) stays above log_Q_lowest
+    log_Q1 = max(log_Q1, log_Q_lowest)  # Q1 >= 0.51
+    
+    log_Q2 = log_Q1 + np.log(2.0)       # Q2 = 2*Q1 >= 1.002, always valid
 
     bounds_sho = {
-        "log_S0":    (-15, 15),
-        "log_Q":     (log_Q_lowest, 15),
+        "log_S0":     (-15, 15),
+        "log_Q":      (log_Q_lowest, 15),
         "log_omega0": (-15, 15),
     }
-    term1 = terms.SHOTerm(
-        log_S0=log_S0_1, log_Q=log_Q1, log_omega0=np.log(w0),
-        bounds=bounds_sho,
-    )
-    term2 = terms.SHOTerm(
-        log_S0=log_S0_2, log_Q=log_Q2, log_omega0=np.log(2.0 * w0),
-        bounds=bounds_sho,
-    )
-    term1.freeze_parameter("log_omega0")
-    term2.freeze_parameter("log_omega0")
-    jitter_term = terms.JitterTerm(
-        log_sigma=log_sigma,
-        bounds={"log_sigma": (-15, 15)},
-    )
-    kernel = term1 + term2 + jitter_term
 
-    gp = celerite.GP(kernel, mean=weighted_mean)
-    gp.compute(t, yerr)
+    try:
+        term1 = terms.SHOTerm(
+            log_S0=log_S0_1, log_Q=log_Q1, log_omega0=np.log(w0),
+            bounds=bounds_sho,
+        )
+        term2 = terms.SHOTerm(
+            log_S0=log_S0_2, log_Q=log_Q2, log_omega0=np.log(2.0 * w0),
+            bounds=bounds_sho,
+        )
+        term1.freeze_parameter("log_omega0")
+        term2.freeze_parameter("log_omega0")
+        jitter_term = terms.JitterTerm(
+            log_sigma=log_sigma,
+            bounds={"log_sigma": (-15, 15)},
+        )
+        kernel = term1 + term2 + jitter_term
 
-    # -- Optimise over 4 free params with Q2 = 2*Q1 enforced in wrapper ----
-    # Bounds: [log_S0_1, log_Q1, log_S0_2, log_sigma]
-    bounds4 = [(-15, 15), (log_Q_lowest, 15), (-15, 15), (-15, 15)]
-    x0 = [log_S0_1, log_Q1, log_S0_2, log_sigma]
+        gp = celerite.GP(kernel, mean=weighted_mean)
+        gp.compute(t, yerr)
 
-    r = minimize(
-        _neg_log_like_dsho,
-        x0,
-        method="L-BFGS-B",
-        bounds=bounds4,
-        args=(y, gp),
-    )
+        bounds4 = [(-15, 15), (log_Q_lowest, 15), (-15, 15), (-15, 15)]
+        x0 = [log_S0_1, log_Q1, log_S0_2, log_sigma]
 
-    log_S0_1_opt, log_Q1_opt, log_S0_2_opt, log_sigma_opt = r.x
-    log_Q2_opt = log_Q1_opt + np.log(2.0)
+        r = minimize(
+            _neg_log_like_dsho,
+            x0,
+            method="L-BFGS-B",
+            bounds=bounds4,
+            args=(y, gp),
+        )
 
-    # Set final parameter vector so gp.log_likelihood returns the optimum
-    gp.set_parameter_vector(
-        [log_S0_1_opt, log_Q1_opt, log_S0_2_opt, log_Q2_opt, log_sigma_opt]
-    )
+        log_S0_1_opt, log_Q1_opt, log_S0_2_opt, log_sigma_opt = r.x
+        log_Q2_opt = log_Q1_opt + np.log(2.0)
 
-    S0_1   = np.exp(log_S0_1_opt)
-    Q_1    = np.exp(log_Q1_opt)
-    S0_2   = np.exp(log_S0_2_opt)
-    Q_2    = np.exp(log_Q2_opt)          # = 2 * Q_1
-    w_2    = 2.0 * w0
-    jitter = np.exp(log_sigma_opt)
+        gp.set_parameter_vector(
+            [log_S0_1_opt, log_Q1_opt, log_S0_2_opt, log_Q2_opt, log_sigma_opt]
+        )
 
-    delta_log_like = gp.log_likelihood(y) - null_log_likelihood
+        S0_1   = np.exp(log_S0_1_opt)
+        Q_1    = np.exp(log_Q1_opt)
+        S0_2   = np.exp(log_S0_2_opt)
+        Q_2    = np.exp(log_Q2_opt)
+        w_2    = 2.0 * w0
+        jitter = np.exp(log_sigma_opt)
+        delta_log_like = gp.log_likelihood(y) - null_log_likelihood
+
+    except Exception:
+        # Return a null result rather than crashing the entire parallel job
+        S0_1 = S0_2 = Q_1 = Q_2 = 1.0
+        w_2 = 2.0 * w0
+        jitter = 1.0
+        delta_log_like = 0.0
 
     return [S0_1, S0_2, Q_1, Q_2, delta_log_like, w0, w_2, jitter]
-
 
 def run_gp_periodogram(t: np.ndarray,
                        y: np.ndarray,
@@ -369,7 +370,7 @@ def run_gp_periodogram(t: np.ndarray,
     result : list of lists
         One list per frequency (see :func:`_process_single_w0`).
     """
-    result = Parallel(n_jobs=-2)(
+    result = Parallel(n_jobs=-1)(
         delayed(_process_single_w0)(
             w0, y, t, yerr, weighted_mean, null_log_likelihood, df_initial
         )
@@ -453,7 +454,8 @@ def gp_predict_best(t: np.ndarray,
     w_2    = float(best["w_2"])
     jitter = float(best["jitter"])
 
-    log_Q_lowest = np.log(0.501)
+    log_Q_lowest = np.log(max(0.51, 5.0 * w0))
+
     bounds = {
         "log_S0":     (-15, 15),
         "log_Q":      (log_Q_lowest, 15),
@@ -537,7 +539,7 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
     """Plot the dSHO GP periodogram coloured by the RMS fraction of the first
     oscillator, at full range and zoomed in."""
     for xlim, suffix in [(xlim_full, ""), (xlim_zoom, "_zoomed")]:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
+        fig, ax = plt.subplots(figsize=(6, 4), dpi=300)
         cmap = "viridis" if colorblind_friendly else "rainbow" 
         ax.plot(Frequency_val, delta_log_like, color="gray",
                 linewidth=0.5, alpha=0.5, zorder=1)
@@ -565,8 +567,8 @@ def plot_gp_periodogram(Frequency_val: np.ndarray,
         ax.set_xlabel("Frequency of first oscillator [1/d]")
         ax.set_ylabel("Δ lnL")
         ax.set_xlim(xlim)
-        #ax.set_ylim([-5,120])
-
+        #ax.set_ylim([-1,20])
+        #ax.set_ylim([-0.1,140])
         #ax.grid(which="major", linestyle="-")
         #ax.minorticks_on()
         #ax.grid(which="minor", color="#DDDDDD", linestyle="--", alpha=0.6)
@@ -596,7 +598,7 @@ def plot_lifetimes_transparent(Frequency_val: np.ndarray,
     )
 
     for xlim, suffix in [(xlim_full, ""), (xlim_zoom, "_zoomed")]:
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
+        fig, ax = plt.subplots(figsize=(6, 4), dpi=300)
         cmap = "viridis" if colorblind_friendly else "rainbow" 
         ax.plot(Frequency_val, lifetime0_values,
                 color="gray", linewidth=0.5, alpha=0.5, zorder=1)
@@ -619,6 +621,7 @@ def plot_lifetimes_transparent(Frequency_val: np.ndarray,
         ax.set_xlabel("Frequency of first oscillator [1/d]")
         ax.set_ylabel("Lifetime [d]")
         ax.set_xlim(xlim)
+        
         ax.set_yscale("log")
         #ax.grid(which="major", linestyle="-")
         #ax.minorticks_on()
