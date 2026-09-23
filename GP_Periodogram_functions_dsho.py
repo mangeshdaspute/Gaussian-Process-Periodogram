@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 GP_Periodogram_functions_dsho.py
 =================================
